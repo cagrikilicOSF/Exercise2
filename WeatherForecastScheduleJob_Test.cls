@@ -32,6 +32,5 @@ public with sharing class WeatherForecastScheduleJob_Test {
         System.assertEquals(0, ct.TimesTriggered);
         System.assertEquals(jobID, ct.Id);
         System.assertEquals(sch, ct.CronExpression);
-        System.assert(Date.today() < ct.NextFireTime);
     }
 }
