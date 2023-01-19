@@ -16,7 +16,7 @@ public with sharing class WeatherForecastScheduleJob_Test {
      * @description WeatherForecastScheduleJob class's test function
      */
     @isTest
-    static void test() {
+    private static void scheduleJobTest() {
         Test.startTest();
         String sch = '0 0 9 ? * *';
         Test.setMock(HttpCalloutMock.class, new WeatherForecastBatchMock());

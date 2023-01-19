@@ -16,7 +16,7 @@ public with sharing class WeatherForecastBatch_Test {
      * @description  create test data
      */
     @TestSetup
-    static void setup() {
+    private static void setup() {
         List<Account> accounts = new List<Account>();
         // insert 10 accounts
         for (Integer i = 0; i < 10; i++) {
@@ -45,7 +45,7 @@ public with sharing class WeatherForecastBatch_Test {
      * @description WeatherForecastBatch class's positive test function
      */
     @isTest
-    static void positiveTest() {
+    private static void positiveTest() {
         Test.startTest();
         Test.setMock(HTTPCalloutMock.class, new WeatherForecastBatchMock());
         WeatherForecastBatch wfb = new WeatherForecastBatch();
@@ -72,7 +72,7 @@ public with sharing class WeatherForecastBatch_Test {
      * @description WeatherForecastBatch class's negative test function
      */
     @isTest
-    static void negativeTest() {
+    private static void negativeTest() {
         Test.startTest();
         Test.setMock(HTTPCalloutMock.class, new WeatherForecastBatchNegativeMock());
         WeatherForecastBatch wfb = new WeatherForecastBatch();

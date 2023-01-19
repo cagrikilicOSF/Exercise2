@@ -16,7 +16,7 @@ public with sharing class InvocableWeatherAction_Test {
      * @description  create test data
      */
     @TestSetup
-    static void setup() {
+    private static void setup() {
         Account account = new Account(name = 'Account ', ShippingCity = 'Lawrence');
         insert account;
         List<openweatherendpoint__c> cSettings = new List<openweatherendpoint__c>();
@@ -39,7 +39,7 @@ public with sharing class InvocableWeatherAction_Test {
      * @description InvocableWeatherAction class's positive test function
      */
     @isTest
-    static void positiveTest() {
+    private static void positiveTest() {
         Test.startTest();
         List<InvocableWeatherAction.Request> liw = new List<InvocableWeatherAction.Request>();
         InvocableWeatherAction.Request iw = new InvocableWeatherAction.Request();
@@ -73,7 +73,7 @@ public with sharing class InvocableWeatherAction_Test {
      * @description InvocableWeatherAction class's negative test function
      */
     @isTest
-    static void negativeTest() {
+    private static void negativeTest() {
         Test.startTest();
         List<InvocableWeatherAction.Request> liw = new List<InvocableWeatherAction.Request>();
         InvocableWeatherAction.Request iw = new InvocableWeatherAction.Request();
