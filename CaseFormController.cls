@@ -21,8 +21,7 @@ public with sharing class CaseFormController {
     @AuraEnabled(cacheable=true)
     public static List<Case_Metadata__mdt> getCaseMetadatas() {
         try {
-            List<Case_Metadata__mdt> caseMetadatas;
-            return caseMetadatas = [
+            return [
                 SELECT Name__c, Default_Value__c
                 FROM Case_Metadata__mdt
             ];
@@ -43,8 +42,7 @@ public with sharing class CaseFormController {
     @AuraEnabled(cacheable=true)
     public static List<Case> getCases(Id userId) {
         try {
-            List<Case> cases;
-            return cases = [
+            return [
                 SELECT
                     Brand__c,
                     Origin,
