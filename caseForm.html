@@ -1,0 +1,27 @@
+<template>
+    <lightning-card title="Case Form">
+        <template if:true={caseMetadatas}>
+            <lightning-record-edit-form object-api-name={objectApiName} onsuccess={handleSuccess}>
+                <lightning-messages></lightning-messages>
+                <lightning-input-field name="origin" field-name="Origin" style="font-weight: bold" value="Web"
+                    disabled="true">
+                </lightning-input-field>
+                <template for:each={caseMetadatas} for:item="caseMetadata">
+                    <lightning-layout-item size="12" key={caseMetadata.key}>
+                        <lightning-input-field value={caseMetadata.Default_Value__c}
+                            field-name={caseMetadata.Name__c}></lightning-input-field>
+                    </lightning-layout-item>
+                </template>
+                <lightning-layout-item size="12" class="slds-align_absolute-center slds-p-top_small">
+                    <lightning-button label="Cancel" class="slds-m-right_small"
+                        onclick={handleReset}></lightning-button>
+                    <lightning-button type="submit" variant="brand" label="Save"></lightning-button>
+                </lightning-layout-item>
+            </lightning-record-edit-form>
+        </template>
+    </lightning-card>
+    <lightning-card title="Cases">
+        <lightning-datatable key-field="id" data={caseDatas} columns={columns} show-row-number-column>
+        </lightning-datatable>
+    </lightning-card>
+</template>
