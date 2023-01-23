@@ -21,6 +21,6 @@ public with sharing class WeatherForecastScheduleJob implements Schedulable {
 	  ******************************************************************/
     public void execute(SchedulableContext ctx) {
         WeatherForecastBatch wfBatch = new WeatherForecastBatch();
-        ID batchprocessid = Database.executeBatch(wfBatch);
+        ID batchprocessid = Database.executeBatch(wfBatch, 100);
     }
 }

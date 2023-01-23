@@ -42,9 +42,14 @@ public with sharing class WeatherForecastBatch implements Database.Batchable<sOb
         for (Account acc : account) {
             String city = acc.ShippingCity;
             if (city != null && city != '') {
-                Account tempAccount = WeatherForecastController.fetchWeatherInfo(city, acc);
-                if (tempAccount.Id != null) {
-                    updateAccounts.add(tempAccount);
+                WeatherForecastController.WrapperData weatherForecastData = WeatherForecastController.fetchWeatherInfo(city);
+                if (weatherForecastData != null) {
+                    acc.Temperature__c = weatherForecastData.temp;
+                    acc.Humidity__c = weatherForecastData.humidity;
+                    acc.Feels_Like__c = weatherForecastData.feelsLike;
+                    acc.Icon_Link__c = weatherForecastData.icon;
+                    acc.Description__c = weatherForecastData.description;
+                    updateAccounts.add(acc);
                 }
             } else {
                 System.debug(SHIPPING_CITY_ERROR);

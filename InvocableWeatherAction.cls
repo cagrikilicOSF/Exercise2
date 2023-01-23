@@ -37,9 +37,21 @@ public with sharing class InvocableWeatherAction {
                     Description__c
                 FROM Account
                 WHERE Id = :accId
+                LIMIT 1
             ];
             String city = requestList.get(0).shippingCity;
-            update WeatherForecastController.fetchWeatherInfo(city, acc);
+            WeatherForecastController.WrapperData weatherForecastData = WeatherForecastController.fetchWeatherInfo(
+                city
+            );
+            if (weatherForecastData != null) {
+                acc.Temperature__c = weatherForecastData.temp;
+                acc.Humidity__c = weatherForecastData.humidity;
+                acc.Feels_Like__c = weatherForecastData.feelsLike;
+                acc.Icon_Link__c = weatherForecastData.icon;
+                acc.Description__c = weatherForecastData.description;
+                acc.ShippingCity = city;
+                update acc;
+            }
         } catch (Exception e) {
             System.debug('Error: ' + e);
         }

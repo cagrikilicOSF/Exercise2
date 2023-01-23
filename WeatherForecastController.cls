@@ -11,20 +11,21 @@
  ******************************************************************/
 public with sharing class WeatherForecastController {
     public static final String HTTP_RESPONSE_ERROR = 'Error : An error occurred while retrieving weather information!';
+    public static final String ICON_URL_EXTENSION = '@2x.png';
+    public static final String ICON_URL = 'http://openweathermap.org/img/wn/';
     /******************************************************************
   	* @Name         : fetchWeatherInfo 
   	* @Description  : Changes the account's weather information
   	* @Created By   : CagriKilic
   	* @Created Date : Jan 17, 2023
     * @Param city   : String - Shipping city of relevant account
-    * @Param acc    : Account - Account to be updated weather information
-    * @Return       : Account - Weather information updated account
+    * @Return       : WrapperData - Weather information of shipping city
 
   	******************************************************************/
-    public static Account fetchWeatherInfo(String city, Account acc) {
+    public static WrapperData fetchWeatherInfo(String city) {
         try {
-            List<openweatherendpoint__c> endPointDatas = openweatherendpoint__c.getAll().values();
-            String endPoint = endPointDatas.get(1).Endpoint_URL__c + city + endPointDatas.get(0).Endpoint_URL__c;
+            WeatherEndpoint__c weatherEndpoint = WeatherEndpoint__c.getInstance(UserInfo.getUserId());
+            String endPoint = weatherEndpoint.Endpoint_URL_Part1__c + city + weatherEndpoint.Endpoint_URL_Part2__c;
             HttpRequest request = new HttpRequest();
             HttpResponse response = new HttpResponse();
             Http http = new Http();
@@ -35,22 +36,16 @@ public with sharing class WeatherForecastController {
             if (response.getStatusCode() == 200) {
                 String jsonResponse = response.getBody();
                 FromJSON jsonParseData = (FromJSON) parse(jsonResponse);
-                WrapperData wrpData = new WrapperData(jsonParseData);
-                acc.Temperature__c = wrpData.temp;
-                acc.Humidity__c = wrpData.humidity;
-                acc.Feels_Like__c = wrpData.feelsLike;
-                acc.Icon_Link__c = wrpData.icon;
-                acc.Description__c = wrpData.description;
-                acc.ShippingCity = city;
-                return acc;
-            } else {
-                System.debug(HTTP_RESPONSE_ERROR);
-                return new Account();
+                WrapperData weatherForecastData = new WrapperData(
+                    jsonParseData
+                );
+                return weatherForecastData;
             }
+            System.debug(HTTP_RESPONSE_ERROR);
         } catch (Exception e) {
             System.debug('Error: ' + e);
-            return new Account();
         }
+        return null;
     }
     /******************************************************************
      * @Name         : WrapperData
@@ -76,7 +71,7 @@ public with sharing class WeatherForecastController {
             this.humidity = te.humidity;
             this.feelsLike = te.feels_like;
             this.description = we.description;
-            this.icon ='http://openweathermap.org/img/wn/' + we.icon + '@2x.png';
+            this.icon = ICON_URL + we.icon + ICON_URL_EXTENSION;
         }
     }
     /******************************************************************
@@ -126,13 +121,13 @@ public with sharing class WeatherForecastController {
         public Integer humidity;
     }
     /******************************************************************
-  	* @Name         : parse 
-  	* @Description  : Parses json data
-  	* @Created By   : CagriKilic
-  	* @Created Date : Jan 17, 2023
-    * @Param json   : String - Data of Http response
-    * @Return       : FromJSON - Weather datas
-  	******************************************************************/
+     * @Name         : parse
+     * @Description  : Parses json data
+     * @Created By   : CagriKilic
+     * @Created Date : Jan 17, 2023
+     * @Param json   : String - Data of Http response
+     * @Return       : FromJSON - Weather datas
+     ******************************************************************/
     private static FromJSON parse(String json) {
         return (FromJSON) System.JSON.deserialize(json, FromJSON.class);
     }

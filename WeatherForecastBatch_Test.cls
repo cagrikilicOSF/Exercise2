@@ -10,13 +10,14 @@
  */
 @isTest
 public with sharing class WeatherForecastBatch_Test {
+    private static final String ENDPOINT_URL = 'https://api.openweathermap.org/data/2.5/weather?q=';
+    private static final String ENDPOINT_URL_EXTENSION = '&units=metric&appid=3e6dc3c440ec8593b831072f36667c5d';
     /**
      * @author Cagri Kilic
      * @date Jan 17, 2023
-     * @description  create test data
+     * @description  init test data
      */
-    @TestSetup
-    private static void setup() {
+    private static void init() {
         List<Account> accounts = new List<Account>();
         // insert 10 accounts
         for (Integer i = 0; i < 10; i++) {
@@ -25,19 +26,12 @@ public with sharing class WeatherForecastBatch_Test {
             );
         }
         insert accounts;
-        List<openweatherendpoint__c> cSettings = new List<openweatherendpoint__c>();
-        for (Integer i = 0; i < 2; i++) {
-            openweatherendpoint__c customSetting = new openweatherendpoint__c();
-            if (i == 1) {
-                customSetting.Name = 'endpointpart1';
-                customSetting.Endpoint_URL__c = 'https://api.openweathermap.org/data/2.5/weather?q=';
-            } else {
-                customSetting.Name = 'endpointpart2';
-                customSetting.Endpoint_URL__c = '&units=metric&appid=3e6dc3c440ec8593b831072f36667c5d';
-            }
-            cSettings.add(customSetting);
-        }
-        insert cSettings;
+        WeatherEndpoint__c customSettings = WeatherEndpoint__c.getInstance(
+            UserInfo.getUserId()
+        );
+        customSettings.Endpoint_URL_Part1__c = ENDPOINT_URL;
+        customSettings.Endpoint_URL_Part2__c = ENDPOINT_URL_EXTENSION;
+        upsert customSettings;
     }
     /**
      * @author Cagri Kilic
@@ -46,6 +40,7 @@ public with sharing class WeatherForecastBatch_Test {
      */
     @isTest
     private static void positiveTest() {
+        init();
         Test.startTest();
         Test.setMock(HTTPCalloutMock.class, new WeatherForecastBatchMock());
         WeatherForecastBatch wfb = new WeatherForecastBatch();
@@ -73,6 +68,7 @@ public with sharing class WeatherForecastBatch_Test {
      */
     @isTest
     private static void negativeTest() {
+        init();
         Test.startTest();
         Test.setMock(HTTPCalloutMock.class, new WeatherForecastBatchNegativeMock());
         WeatherForecastBatch wfb = new WeatherForecastBatch();

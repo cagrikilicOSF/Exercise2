@@ -10,28 +10,30 @@
  */
 @isTest
 public with sharing class InvocableWeatherAction_Test {
+    private static final String ENDPOINT_URL = 'https://api.openweathermap.org/data/2.5/weather?q=';
+    private static final String ENDPOINT_URL_EXTENSION = '&units=metric&appid=3e6dc3c440ec8593b831072f36667c5d';
+    private static final String TEST_SHIPPING_CITY = 'London';
+    private static List<InvocableWeatherAction.Request> liw;
+    private static Account acc;
+    /**
     /**
      * @author Cagri Kilic
      * @date Jan 17, 2023
-     * @description  create test data
+     * @description  init test data
      */
-    @TestSetup
-    private static void setup() {
-        Account account = new Account(name = 'Account ', ShippingCity = 'Lawrence');
-        insert account;
-        List<openweatherendpoint__c> cSettings = new List<openweatherendpoint__c>();
-        for (Integer i = 0; i < 2; i++) {
-            openweatherendpoint__c customSetting = new openweatherendpoint__c();
-            if (i == 1) {
-                customSetting.Name = 'endpointpart1';
-                customSetting.Endpoint_URL__c = 'https://api.openweathermap.org/data/2.5/weather?q=';
-            } else {
-                customSetting.Name = 'endpointpart2';
-                customSetting.Endpoint_URL__c = '&units=metric&appid=3e6dc3c440ec8593b831072f36667c5d';
-            }
-            cSettings.add(customSetting);
-        }
-        insert cSettings;
+    private static void init() {
+        acc = new Account(name = 'Account ', ShippingCity = 'Lawrence');
+        insert acc;
+        WeatherEndpoint__c customSettings = WeatherEndpoint__c.getInstance(UserInfo.getUserId());
+        customSettings.Endpoint_URL_Part1__c = ENDPOINT_URL;
+        customSettings.Endpoint_URL_Part2__c = ENDPOINT_URL_EXTENSION;
+        upsert customSettings;
+        liw = new List<InvocableWeatherAction.Request>();
+        InvocableWeatherAction.Request iw = new InvocableWeatherAction.Request();
+        Id accId = acc.Id;
+        iw.recordId = accId;
+        iw.shippingCity = TEST_SHIPPING_CITY;
+        liw.add(iw);
     }
     /**
      * @author Cagri Kilic
@@ -40,13 +42,8 @@ public with sharing class InvocableWeatherAction_Test {
      */
     @isTest
     private static void positiveTest() {
+        init();
         Test.startTest();
-        List<InvocableWeatherAction.Request> liw = new List<InvocableWeatherAction.Request>();
-        InvocableWeatherAction.Request iw = new InvocableWeatherAction.Request();
-        Id accId = [SELECT Id FROM Account].Id;
-        iw.recordId = accId;
-        iw.shippingCity = 'London';
-        liw.add(iw);
         Test.setMock(HTTPCalloutMock.class, new WeatherForecastBatchMock());
         InvocableWeatherAction.updateAccountWeatherForecastInfo(liw);
         Test.stopTest();
@@ -57,13 +54,13 @@ public with sharing class InvocableWeatherAction_Test {
                 SELECT COUNT()
                 FROM Account
                 WHERE
-                    Id = :iw.recordId
+                    Id = :acc.Id
                     AND Temperature__c != NULL
                     AND Humidity__c != NULL
                     AND Description__c != NULL
                     AND Feels_Like__c != NULL
                     AND Icon_Link__c != NULL
-                    AND ShippingCity = 'London'
+                    AND ShippingCity = :TEST_SHIPPING_CITY
             ]
         );
     }
@@ -74,14 +71,12 @@ public with sharing class InvocableWeatherAction_Test {
      */
     @isTest
     private static void negativeTest() {
+        init();
         Test.startTest();
-        List<InvocableWeatherAction.Request> liw = new List<InvocableWeatherAction.Request>();
-        InvocableWeatherAction.Request iw = new InvocableWeatherAction.Request();
-        Id accId = [SELECT Id FROM Account].Id;
-        iw.recordId = accId;
-        iw.shippingCity = 'London';
-        liw.add(iw);
-        Test.setMock(HTTPCalloutMock.class, new WeatherForecastBatchNegativeMock());
+        Test.setMock(
+            HTTPCalloutMock.class,
+            new WeatherForecastBatchNegativeMock()
+        );
         InvocableWeatherAction.updateAccountWeatherForecastInfo(liw);
         Test.stopTest();
         // after the testing stops, assert records were updated properly
@@ -91,13 +86,13 @@ public with sharing class InvocableWeatherAction_Test {
                 SELECT COUNT()
                 FROM Account
                 WHERE
-                    Id = :iw.recordId
+                    Id = :acc.Id
                     AND Temperature__c = NULL
                     AND Humidity__c = NULL
                     AND Description__c = NULL
                     AND Feels_Like__c = NULL
                     AND Icon_Link__c = NULL
-                    AND ShippingCity != 'London'
+                    AND ShippingCity != :TEST_SHIPPING_CITY
             ]
         );
     }
