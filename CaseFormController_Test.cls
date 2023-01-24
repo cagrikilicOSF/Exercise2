@@ -13,10 +13,9 @@ public with sharing class CaseFormController_Test {
     /**
      * @author Cagri Kilic
      * @date Jan 19, 2023
-     * @description  Create test data
+     * @description  init test data
      */
-    @TestSetup
-    private static void setup() {
+    private static void init() {
         List<Case> cases = new List<Case>();
         for (Integer i = 0; i < 5; i++) {
             Case newCase = new Case(
@@ -37,10 +36,9 @@ public with sharing class CaseFormController_Test {
      */
     @isTest
     private static void caseFormControllerTest() {
+        init();
         Test.startTest();
-        List<Case> testCases = CaseFormController.getCases(
-            UserInfo.getUserId()
-        );
+        List<Case> testCases = CaseFormController.getCases(UserInfo.getUserId());
         List<Case_Metadata__mdt> testMetadatas = CaseFormController.getCaseMetadatas();
         Test.stopTest();
 
