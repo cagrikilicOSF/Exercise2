@@ -40,6 +40,22 @@ public with sharing class InvocableWeatherAction {
                 LIMIT 1
             ];
             String city = requestList.get(0).shippingCity;
+            update setWeatherInfoToAccount(acc, city);
+        } catch (Exception e) {
+            System.debug('Error: ' + e);
+        }
+    }
+    /******************************************************************
+     * @Name         : setWeatherInfoToAccount
+     * @Description  : Sets account's weather informations
+     * @Created By   : CagriKilic
+     * @Created Date : Jan 24, 2023
+     * @Param acc    : Account - Relevant account
+     * @Param city   : String - Account's shipping city
+     * @Return       : Account - Relevant account
+     ******************************************************************/
+    public static Account setWeatherInfoToAccount(Account acc, String city) {
+        try {
             WeatherForecastController.WrapperData weatherForecastData = WeatherForecastController.fetchWeatherInfo(
                 city
             );
@@ -50,10 +66,11 @@ public with sharing class InvocableWeatherAction {
                 acc.Icon_Link__c = weatherForecastData.icon;
                 acc.Description__c = weatherForecastData.description;
                 acc.ShippingCity = city;
-                update acc;
             }
+            return acc;
         } catch (Exception e) {
             System.debug('Error: ' + e);
+            return new Account();
         }
     }
     /******************************************************************
