@@ -15,6 +15,12 @@ import ACCOUNT_OBJECT from "@salesforce/schema/Case";
 import getCaseMetadatas from "@salesforce/apex/CaseFormController.getCaseMetadatas";
 import getCases from "@salesforce/apex/CaseFormController.getCases";
 import Id from "@salesforce/user/Id";
+const SUCCESS_TITLE = "Case Created";
+const SUCCESS_MESSAGE = "Record ID";
+const SUCCESS_VARIANT = "success";
+const ERROR_TITLE = "Error!";
+const ERROR_MESSAGE = "An error occurred while creating the case!";
+const ERROR_VARIANT = "error";
 const columns = [
     { label: "Created Date", fieldName: "CreatedDate", type: "date" },
     { label: "Case Origin", fieldName: "Origin" },
@@ -29,7 +35,6 @@ export default class CaseForm extends LightningElement {
     @track caseMetadatas;
     @track caseDatas;
     @track currentUserId = Id;
-    error;
     columns = columns;
     /******************************************************************
      * @Name         : wiredCaseMetadatas
@@ -44,9 +49,8 @@ export default class CaseForm extends LightningElement {
     wiredCaseMetadatas({ error, data }) {
         if (data) {
             this.caseMetadatas = data;
-            this.error = undefined;
         } else if (error) {
-            this.error = error;
+            this.showToast(ERROR_TITLE, error?.body?.message, ERROR_VARIANT);
             this.caseMetadatas = undefined;
         }
     }
@@ -64,9 +68,8 @@ export default class CaseForm extends LightningElement {
     wiredCaseDatas({ error, data }) {
         if (data) {
             this.caseDatas = data;
-            this.error = undefined;
         } else if (error) {
-            this.error = error;
+            this.showToast(ERROR_TITLE, error?.body?.message, ERROR_VARIANT);
             this.caseDatas = undefined;
         }
     }
@@ -80,20 +83,28 @@ export default class CaseForm extends LightningElement {
      ******************************************************************/
     handleSuccess(event) {
         if (event.detail.id != null) {
-            const toastEvent = new ShowToastEvent({
-                title: "Case created",
-                message: "Record ID: " + event.detail.id,
-                variant: "success",
-            });
-            this.dispatchEvent(toastEvent);
+            this.showToast(SUCCESS_TITLE, SUCCESS_MESSAGE, SUCCESS_VARIANT);
         } else if (event.detail.id == null) {
-            const toastEvent = new ShowToastEvent({
-                title: "Error!",
-                message: "An error occurred while creating the case!",
-                variant: "error",
-            });
-            this.dispatchEvent(toastEvent);
+            this.showToast(ERROR_TITLE, ERROR_MESSAGE, ERROR_VARIANT);
         }
+    }
+    /******************************************************************
+     * @Name              : showToast
+     * @Description       : Sets the success status of the event
+     * @Created By        : Cagri Kilic
+     * @Created Date      : Jan 25, 2023
+     * @Param theTitle    : Title of the message
+     * @Param theMessage  : Content of the message
+     * @Param theVariant  : Variant of the message
+
+     ******************************************************************/
+    showToast(theTitle, theMessage, theVariant) {
+        const toastEvent = new ShowToastEvent({
+            title: theTitle,
+            message: theMessage,
+            variant: theVariant,
+        });
+        this.dispatchEvent(toastEvent);
     }
     /******************************************************************
      * @Name         : handleReset

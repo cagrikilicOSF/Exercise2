@@ -10,6 +10,9 @@
  *
  ******************************************************************/
 public with sharing class CaseFormController {
+    private static final String METADATA_QUERY_ERROR = 'An error occurred while retrieving the metadata!';
+    private static final String CASE_QUERY_ERROR = 'An error occurred while retrieving the case!';
+    private static final Set<String> STATUSES_TO_SKIP = new Set<String>{'Closed'};
     /******************************************************************
 	 * @Name         : getCaseMetadatas
 	 * @Description  : Retrieves the metadatas
@@ -27,7 +30,7 @@ public with sharing class CaseFormController {
             ];
         } catch (Exception e) {
             System.debug('Error: ' + e);
-            return new List<Case_Metadata__mdt>();
+            throw new AuraHandledException(METADATA_QUERY_ERROR);
         }
     }
     /******************************************************************
@@ -52,11 +55,11 @@ public with sharing class CaseFormController {
                     Description,
                     Status
                 FROM Case
-                WHERE Status != 'Closed' AND CreatedById = :userId
+                WHERE Status != :STATUSES_TO_SKIP AND CreatedById = :userId
             ];
         } catch (Exception e) {
             System.debug('Error: ' + e);
-            return new List<Case>();
+            throw new AuraHandledException(CASE_QUERY_ERROR);
         }
     }
 }
