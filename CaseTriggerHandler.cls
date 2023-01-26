@@ -11,12 +11,10 @@
  ******************************************************************/
 public with sharing class CaseTriggerHandler {
     private static final String RECORD_TYPE_LABEL = 'Person Account';
-    private static final String CASE_TYPE = 'EmailToCase';
     private static final String BRAND_TYPE_1 = 'Option 1';
     private static final String BRAND_TYPE_2 = 'Option 2';
-    private static final String ORIGIN_TYPE_1 = 'Web';
+    private static final String ORIGIN_TYPE_1 = 'Phone';
     private static final String ORIGIN_TYPE_2 = 'Email';
-    private static final String EMAIL_ADDRESS_EXTENSION = '@gmail.com';
     private static String recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(RECORD_TYPE_LABEL).getRecordTypeId();
     /******************************************************************************
      * @Name               : addAccountToCase
@@ -28,11 +26,6 @@ public with sharing class CaseTriggerHandler {
     public static void addAccountToCase(List<Case> newCases) {
         try {
             List<Account> newAccounts = new List<Account>();
-            List<EmailServicesAddress> emailAddresses = [
-                SELECT LocalPart
-                FROM EmailServicesAddress
-                WHERE Function.FunctionName = :CASE_TYPE AND IsActive = TRUE
-            ];
             Map<String, List<String>> oldCasesMap = new Map<String, List<String>>();
             List<Case> casesWithoutAccount = new List<Case>();
             List<Case> oldCases = [
@@ -49,31 +42,28 @@ public with sharing class CaseTriggerHandler {
                 }
             }
             for (Case nCase : newCases) {
-                if (nCase.Origin == ORIGIN_TYPE_2) {
-                    // for the email-to-case
-                    if (nCase.SuppliedEmail == emailAddresses.get(0).LocalPart + EMAIL_ADDRESS_EXTENSION) {
-                        nCase.Brand__c = BRAND_TYPE_1;
-                    } else if (nCase.SuppliedEmail == emailAddresses.get(1).LocalPart + EMAIL_ADDRESS_EXTENSION) {
-                        nCase.Brand__c = BRAND_TYPE_2;
-                    }
-                } else if (nCase.Origin == ORIGIN_TYPE_1) {
-                    // for the web-to-case
-                    if (!oldCasesMap.containsKey(nCase.SuppliedEmail)) {
+                if (ORIGIN_TYPE_1.equals(nCase.Origin)) {
+                    // for the email-to-case -- brand 1
+                    nCase.Brand__c = BRAND_TYPE_1;
+                } else if (ORIGIN_TYPE_2.equals(nCase.Origin)) {
+                    // for the email-to-case -- brand 2
+                    nCase.Brand__c = BRAND_TYPE_2;
+                }
+                if (!oldCasesMap.containsKey(nCase.SuppliedEmail)) {
+                    newAccounts.add(createPersonAccount(nCase));
+                    oldCasesMap.put(nCase.SuppliedEmail, new List<String>{ nCase.Brand__c, null });
+                    casesWithoutAccount.add(nCase);
+                } else {
+                    if (!oldCasesMap.get(nCase.SuppliedEmail).contains(nCase.Brand__c)) {
                         newAccounts.add(createPersonAccount(nCase));
                         oldCasesMap.put(nCase.SuppliedEmail, new List<String>{ nCase.Brand__c, null });
                         casesWithoutAccount.add(nCase);
                     } else {
-                        if (!oldCasesMap.get(nCase.SuppliedEmail).contains(nCase.Brand__c)) {
-                            newAccounts.add(createPersonAccount(nCase));
-                            oldCasesMap.put(nCase.SuppliedEmail, new List<String>{ nCase.Brand__c, null });
-                            casesWithoutAccount.add(nCase);
+                        Integer indexOfAccId = oldCasesMap.get(nCase.SuppliedEmail).indexOf(nCase.Brand__c) + 1;
+                        if (oldCasesMap.get(nCase.SuppliedEmail).get(indexOfAccId) != null) {
+                            nCase.AccountId = oldCasesMap.get(nCase.SuppliedEmail).get(indexOfAccId);
                         } else {
-                            Integer indexOfAccId = oldCasesMap.get(nCase.SuppliedEmail).indexOf(nCase.Brand__c) + 1;
-                            if (oldCasesMap.get(nCase.SuppliedEmail).get(indexOfAccId) != null) {
-                                nCase.AccountId = oldCasesMap.get(nCase.SuppliedEmail).get(indexOfAccId);
-                            } else {
-                                casesWithoutAccount.add(nCase);
-                            }
+                            casesWithoutAccount.add(nCase);
                         }
                     }
                 }
