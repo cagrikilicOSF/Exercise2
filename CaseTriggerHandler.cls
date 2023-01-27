@@ -11,10 +11,7 @@
  ******************************************************************/
 public with sharing class CaseTriggerHandler {
     private static final String RECORD_TYPE_LABEL = 'Person Account';
-    private static final String BRAND_TYPE_1 = 'Option 1';
-    private static final String BRAND_TYPE_2 = 'Option 2';
-    private static final String ORIGIN_TYPE_1 = 'Phone';
-    private static final String ORIGIN_TYPE_2 = 'Email';
+    private static final Map<String, String> ORIGIN_TYPE = new Map<String, String>{ 'Phone' => 'Option 1', 'Email' => 'Option 2' };
     private static String recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(RECORD_TYPE_LABEL).getRecordTypeId();
     /******************************************************************************
      * @Name               : addAccountToCase
@@ -26,42 +23,41 @@ public with sharing class CaseTriggerHandler {
     public static void addAccountToCase(List<Case> newCases) {
         try {
             List<Account> newAccounts = new List<Account>();
-            Map<String, List<String>> oldCasesMap = new Map<String, List<String>>();
+            Map<String, Map<String, Id>> oldCasesMap = new Map<String, Map<String, Id>>();
             List<Case> casesWithoutAccount = new List<Case>();
+            Set<String> newCaseEmails = new Set<String>();
+            for (Case nc : newCases) {
+                newCaseEmails.add(nc.SuppliedEmail);
+            }
             List<Case> oldCases = [
                 SELECT SuppliedEmail, Brand__c, Id, AccountId
                 FROM Case
-                WHERE SuppliedEmail != NULL
+                WHERE SuppliedEmail = :newCaseEmails AND Brand__c != NULL
             ];
             for (Case c : oldCases) {
                 if (oldCasesMap.containsKey(c.SuppliedEmail)) {
-                    oldCasesMap.get(c.SuppliedEmail).add(c.Brand__c);
-                    oldCasesMap.get(c.SuppliedEmail).add(c.AccountId);
+                    oldCasesMap.get(c.SuppliedEmail).put(c.Brand__c, c.AccountId);
                 } else {
-                    oldCasesMap.put(c.SuppliedEmail, new List<String>{ c.Brand__c, c.AccountId });
+                    oldCasesMap.put(c.SuppliedEmail, new Map<String, Id>{ c.Brand__c => c.AccountId });
                 }
             }
             for (Case nCase : newCases) {
-                if (ORIGIN_TYPE_1.equals(nCase.Origin)) {
-                    // for the email-to-case -- brand 1
-                    nCase.Brand__c = BRAND_TYPE_1;
-                } else if (ORIGIN_TYPE_2.equals(nCase.Origin)) {
-                    // for the email-to-case -- brand 2
-                    nCase.Brand__c = BRAND_TYPE_2;
+                if (ORIGIN_TYPE.containsKey(nCase.Origin)) {
+                    nCase.Brand__c = ORIGIN_TYPE.get(nCase.Origin);
                 }
                 if (!oldCasesMap.containsKey(nCase.SuppliedEmail)) {
                     newAccounts.add(createPersonAccount(nCase));
-                    oldCasesMap.put(nCase.SuppliedEmail, new List<String>{ nCase.Brand__c, null });
+                    oldCasesMap.put(nCase.SuppliedEmail, new Map<String, Id>{ nCase.Brand__c => null });
                     casesWithoutAccount.add(nCase);
                 } else {
-                    if (!oldCasesMap.get(nCase.SuppliedEmail).contains(nCase.Brand__c)) {
+                    if (!oldCasesMap.get(nCase.SuppliedEmail).containsKey(nCase.Brand__c)) {
                         newAccounts.add(createPersonAccount(nCase));
-                        oldCasesMap.put(nCase.SuppliedEmail, new List<String>{ nCase.Brand__c, null });
+                        oldCasesMap.put(nCase.SuppliedEmail, new Map<String, Id>{ nCase.Brand__c => null });
                         casesWithoutAccount.add(nCase);
                     } else {
-                        Integer indexOfAccId = oldCasesMap.get(nCase.SuppliedEmail).indexOf(nCase.Brand__c) + 1;
-                        if (oldCasesMap.get(nCase.SuppliedEmail).get(indexOfAccId) != null) {
-                            nCase.AccountId = oldCasesMap.get(nCase.SuppliedEmail).get(indexOfAccId);
+                        Id accId = oldCasesMap.get(nCase.SuppliedEmail).get(nCase.Brand__c);
+                        if (accId != null) {
+                            nCase.AccountId = accId;
                         } else {
                             casesWithoutAccount.add(nCase);
                         }
