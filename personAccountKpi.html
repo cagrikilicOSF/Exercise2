@@ -1,0 +1,8 @@
+<template>
+  <lightning-card title="Person KPI Outputs">
+    <template if:true={kpiInformations}>
+      <lightning-datatable key-field="id" data={kpiInformations} columns={columns} show-row-number-column>
+      </lightning-datatable>
+    </template>
+  </lightning-card>
+</template>
