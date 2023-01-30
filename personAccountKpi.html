@@ -1,8 +1,13 @@
 <template>
   <lightning-card title="Person KPI Outputs">
-    <template if:true={kpiInformations}>
-      <lightning-datatable key-field="id" data={kpiInformations} columns={columns} show-row-number-column>
-      </lightning-datatable>
-    </template>
+    <div if:true={isLoading} style="height: 200px; position:relative">
+      <lightning-spinner variant="base" size="medium"></lightning-spinner>
+    </div>
+    <div if:false={isLoading} class="slds-m-around_large">
+      <template if:true={kpiInformations}>
+        <lightning-datatable key-field="id" data={kpiInformations} columns={columns} show-row-number-column>
+        </lightning-datatable>
+      </template>
+    </div>
   </lightning-card>
 </template>

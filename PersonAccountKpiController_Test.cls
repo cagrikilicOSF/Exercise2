@@ -73,8 +73,9 @@ public with sharing class PersonAccountKpiController_Test {
     @isTest
     static void personAccountKpiControllerTest() {
         init();
+        List<List<Object>> testDataArr = new List<List<Object>>();
+        List<Object> testData = new List<Object>();
         Test.startTest();
-        List<List<Object>> testDatas = new List<List<Object>>();
         List<Account> acc = [
             SELECT Id
             FROM Account
@@ -82,12 +83,25 @@ public with sharing class PersonAccountKpiController_Test {
             LIMIT 2
         ];
         for (Account a : acc) {
-            List<Object> data = PersonAccountKpiController.getPersonAccountKpi(a.Id);
-            testDatas.add(data);
+            List<Object> allCases = PersonAccountKpiController.getAllCases(a.Id);
+            Object totalOfOrderAmount = PersonAccountKpiController.getTotalOfOrderAmount(a.Id);
+            Object totalOfOrderAmountLast5Years = PersonAccountKpiController.getTotalOfOrderAmountLast5Years(a.Id);
+            List<Object> accountData = PersonAccountKpiController.getAccount(a.Id);
+            Object allOrders = PersonAccountKpiController.getAllOrders(a.Id);
+            Object avarageOfOrderAmount = PersonAccountKpiController.getAvarageOfOrderAmount(a.Id);
+            testDataArr.add(accountData);
+            testDataArr.add(allCases);
+            testData.add(totalOfOrderAmount);
+            testData.add(totalOfOrderAmountLast5Years);
+            testData.add(allOrders);
+            testData.add(avarageOfOrderAmount);
         }
         Test.stopTest();
-
-        System.assertEquals(8, testDatas.get(0).size());
-        System.assertEquals(8, testDatas.get(1).size());
+        for (Integer i = 0; i < testData.size(); i++) {
+            if (i < testDataArr.size()) {
+                System.assertEquals(2, testDataArr.get(i).size());
+            }
+            System.assert(testData.get(i) != null);
+        }
     }
 }

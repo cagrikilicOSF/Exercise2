@@ -9,9 +9,15 @@
  *------------------------------------------------------------
  *
  ******************************************************************/
-import { LightningElement, wire, track, api } from "lwc";
+import { LightningElement, track, api } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import getKpiInformations from "@salesforce/apex/PersonAccountKpiController.getPersonAccountKpi";
+import getTotalOfOrderAmount from "@salesforce/apex/PersonAccountKpiController.getTotalOfOrderAmount";
+import getTotalOfOrderAmountLast5Years from "@salesforce/apex/PersonAccountKpiController.getTotalOfOrderAmountLast5Years";
+import getAllCases from "@salesforce/apex/PersonAccountKpiController.getAllCases";
+import getAllOrders from "@salesforce/apex/PersonAccountKpiController.getAllOrders";
+import getAccount from "@salesforce/apex/PersonAccountKpiController.getAccount";
+import getAvarageOfOrderAmount from "@salesforce/apex/PersonAccountKpiController.getAvarageOfOrderAmount";
+const KPI_ERROR = "An error occurred while retrieving the data of KPI!";
 const ERROR_TITLE = "Error!";
 const ERROR_VARIANT = "error";
 const columns = [
@@ -28,38 +34,92 @@ const columns = [
 export default class PersonAccountKpi extends LightningElement {
     @api recordId;
     @track kpiInformations;
-    error;
+    @track isLoading;
     columns = columns;
 
     /******************************************************************
-     * @Name         : wiredKpiDatas
-     * @Description  : Retrieves the Kpi Datas Of Person Account
+     * @Name         : connectedCallback
+     * @Description  : Runs when the component is opened
      * @Created By   : Cagri Kilic
-     * @Created Date : Jan 20, 2023
-     * @Param error  : Keeps the error
-     * @Param data   : Keeps the kpi datas
+     * @Created Date : Jan 30, 2023
      
      ******************************************************************/
-    @wire(getKpiInformations, { accId: "$recordId" })
-    wiredKpiDatas({ error, data }) {
-        console.log(data);
-        if (data) {
-            this.kpiInformations = [
-                {
-                    YTD: data[0],
-                    YTD5: data[1],
-                    OpenCases: data[3],
-                    TotalCases: data[2],
-                    CustomerSince: data[4],
-                    TotalNumberofOrders: data[5],
-                    Birthday: data[6],
-                    AverageOrderValue: data[7],
-                },
-            ];
-        } else if (error) {
-            this.showToast(ERROR_TITLE, error?.body?.message, ERROR_VARIANT);
-            this.kpiInformations = undefined;
-        }
+    connectedCallback() {
+        this.handleKpiOfAccount();
+    }
+    /******************************************************************
+	 * @Name         : handleKpiOfAccount
+	 * @Description  : Retrieves the Kpi Datas Of Person Account
+	 * @Created By   : Cagri Kilic
+	 * @Created Date : Jan 30, 2023
+     
+	 ******************************************************************/
+    handleKpiOfAccount() {
+        this.isLoading = true;
+        this.kpiInformations = [{}];
+        getTotalOfOrderAmount({
+            accId: this.recordId,
+        })
+            .then((result) => {
+                if (result) {
+                    this.kpiInformations[0].YTD = result;
+                    return getTotalOfOrderAmountLast5Years({
+                        accId: this.recordId,
+                    });
+                }
+                return KPI_ERROR;
+            })
+            .then((result) => {
+                if (result) {
+                    this.kpiInformations[0].YTD5 = result;
+                    return getAllCases({
+                        accId: this.recordId,
+                    });
+                }
+                return KPI_ERROR;
+            })
+            .then((result) => {
+                if (result) {
+                    this.kpiInformations[0].TotalCases = result[0];
+                    this.kpiInformations[0].OpenCases = result[1];
+                    return getAccount({
+                        accId: this.recordId,
+                    });
+                }
+                return KPI_ERROR;
+            })
+            .then((result) => {
+                if (result) {
+                    this.kpiInformations[0].CustomerSince = result[0];
+                    this.kpiInformations[0].Birthday = result[1];
+                    return getAllOrders({
+                        accId: this.recordId,
+                    });
+                }
+                return KPI_ERROR;
+            })
+            .then((result) => {
+                if (result) {
+                    this.kpiInformations[0].TotalNumberofOrders = result;
+                    return getAvarageOfOrderAmount({
+                        accId: this.recordId,
+                    });
+                }
+                return KPI_ERROR;
+            })
+            .then((result) => {
+                if (result) {
+                    this.kpiInformations[0].AverageOrderValue = result;
+                }
+                return KPI_ERROR;
+            })
+            .catch((error) => {
+                console.log("ERROR : " + JSON.stringify(error));
+                this.showToast(ERROR_TITLE, error?.body?.message, ERROR_VARIANT);
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
     /******************************************************************
      * @Name              : showToast
