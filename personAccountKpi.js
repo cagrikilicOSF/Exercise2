@@ -11,12 +11,9 @@
  ******************************************************************/
 import { LightningElement, track, api } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import getTotalOfOrderAmount from "@salesforce/apex/PersonAccountKpiController.getTotalOfOrderAmount";
-import getTotalOfOrderAmountLast5Years from "@salesforce/apex/PersonAccountKpiController.getTotalOfOrderAmountLast5Years";
+import getOrderData from "@salesforce/apex/PersonAccountKpiController.getOrderData";
 import getAllCases from "@salesforce/apex/PersonAccountKpiController.getAllCases";
-import getAllOrders from "@salesforce/apex/PersonAccountKpiController.getAllOrders";
 import getAccount from "@salesforce/apex/PersonAccountKpiController.getAccount";
-import getAvarageOfOrderAmount from "@salesforce/apex/PersonAccountKpiController.getAvarageOfOrderAmount";
 const KPI_ERROR = "An error occurred while retrieving the data of KPI!";
 const ERROR_TITLE = "Error!";
 const ERROR_VARIANT = "error";
@@ -57,13 +54,17 @@ export default class PersonAccountKpi extends LightningElement {
     handleKpiOfAccount() {
         this.isLoading = true;
         this.kpiInformations = [{}];
-        getTotalOfOrderAmount({
+        getOrderData({
+            selectField: "SUM(TotalAmount)",
+            additionalWhereConditions: "AND EffectiveDate = THIS_YEAR",
             accId: this.recordId,
         })
             .then((result) => {
                 if (result) {
                     this.kpiInformations[0].YTD = result;
-                    return getTotalOfOrderAmountLast5Years({
+                    return getOrderData({
+                        selectField: "SUM(TotalAmount)",
+                        additionalWhereConditions: "AND EffectiveDate = LAST_N_YEARS:5",
                         accId: this.recordId,
                     });
                 }
@@ -92,7 +93,9 @@ export default class PersonAccountKpi extends LightningElement {
                 if (result) {
                     this.kpiInformations[0].CustomerSince = result[0];
                     this.kpiInformations[0].Birthday = result[1];
-                    return getAllOrders({
+                    return getOrderData({
+                        selectField: "COUNT(Id)",
+                        additionalWhereConditions: "",
                         accId: this.recordId,
                     });
                 }
@@ -101,7 +104,9 @@ export default class PersonAccountKpi extends LightningElement {
             .then((result) => {
                 if (result) {
                     this.kpiInformations[0].TotalNumberofOrders = result;
-                    return getAvarageOfOrderAmount({
+                    return getOrderData({
+                        selectField: "AVG(TotalAmount)",
+                        additionalWhereConditions: "",
                         accId: this.recordId,
                     });
                 }

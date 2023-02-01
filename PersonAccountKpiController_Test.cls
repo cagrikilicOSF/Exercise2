@@ -84,11 +84,11 @@ public with sharing class PersonAccountKpiController_Test {
         ];
         for (Account a : acc) {
             List<Object> allCases = PersonAccountKpiController.getAllCases(a.Id);
-            Object totalOfOrderAmount = PersonAccountKpiController.getTotalOfOrderAmount(a.Id);
-            Object totalOfOrderAmountLast5Years = PersonAccountKpiController.getTotalOfOrderAmountLast5Years(a.Id);
+            Object totalOfOrderAmount = PersonAccountKpiController.getOrderData('SUM(TotalAmount)', 'AND EffectiveDate = THIS_YEAR', a.Id);
+            Object totalOfOrderAmountLast5Years = PersonAccountKpiController.getOrderData('SUM(TotalAmount)', 'AND EffectiveDate = LAST_N_YEARS:5', a.Id);
             List<Object> accountData = PersonAccountKpiController.getAccount(a.Id);
-            Object allOrders = PersonAccountKpiController.getAllOrders(a.Id);
-            Object avarageOfOrderAmount = PersonAccountKpiController.getAvarageOfOrderAmount(a.Id);
+            Object allOrders = PersonAccountKpiController.getOrderData('COUNT(Id)', '', a.Id);
+            Object avarageOfOrderAmount = PersonAccountKpiController.getOrderData('AVG(TotalAmount)', '', a.Id);
             testDataArr.add(accountData);
             testDataArr.add(allCases);
             testData.add(totalOfOrderAmount);

@@ -14,51 +14,24 @@ public with sharing class PersonAccountKpiController {
     private static final String STATUS = 'Closed';
     private static final String PERSON_BIRTHDATE = 'PersonBirthdate';
     /******************************************************************
-	 * @Name         : getTotalOfOrderAmount
-	 * @Description  : Gets total of order amount
+	 * @Name         : getOrderData
+	 * @Description  : Gets data of order 
 	 * @Created By   : Cagri Kilic
 	 * @Created Date : Jan 30, 2023
      * @Param accId  : Id - Account Id
-     * @Return       : Object - Total of order amount
+     * @Param selectField  : String  - Select field
+     * @Param additionalWhereConditions  : String  - Additional conditions
+     * @Return       : Object - Query result
      
 	 ******************************************************************/
     @AuraEnabled(cacheable=true)
-    public static Object getTotalOfOrderAmount(Id accId) {
+    public static Object getOrderData(String selectField, String additionalWhereConditions, Id accId) {
         try {
-            AggregateResult[] totalOfOrderAmount = [
-                SELECT SUM(TotalAmount)
-                FROM Order
-                WHERE AccountId = :accId AND EffectiveDate = THIS_YEAR
-            ];
-            if (totalOfOrderAmount[0].get('expr0') != null) {
-                return totalOfOrderAmount[0].get('expr0');
-            } else {
-                return (Object) '0';
-            }
-        } catch (Exception e) {
-            System.debug('Error: ' + e);
-            throw new AuraHandledException(KPI_ERROR);
-        }
-    }
-    /******************************************************************
-	 * @Name         : getTotalOfOrderAmountLast5Years
-	 * @Description  : Gets total of order amount last 5 years
-	 * @Created By   : Cagri Kilic
-	 * @Created Date : Jan 30, 2023
-     * @Param accId  : Id - Account Id
-     * @Return       : Object - Total of order amount last 5 years
-     
-	 ******************************************************************/
-    @AuraEnabled(cacheable=true)
-    public static Object getTotalOfOrderAmountLast5Years(Id accId) {
-        try {
-            AggregateResult[] totalOfOrderAmountLast5Years = [
-                SELECT SUM(TotalAmount)
-                FROM Order
-                WHERE AccountId = :accId AND EffectiveDate = LAST_N_YEARS:5
-            ];
-            if (totalOfOrderAmountLast5Years[0].get('expr0') != null) {
-                return totalOfOrderAmountLast5Years[0].get('expr0');
+            List<Object> orderData = new List<Object>();
+            String query = 'SELECT ' + selectField + ' FROM Order WHERE AccountId = :accId ' + additionalWhereConditions;
+            AggregateResult[] queryResult = Database.query(query);
+            if (queryResult[0].get('expr0') != null && queryResult[0].get('expr0') != 0) {
+                return queryResult[0].get('expr0');
             } else {
                 return (Object) '0';
             }
@@ -126,59 +99,6 @@ public with sharing class PersonAccountKpiController {
                 accData.add(message);
             }
             return accData;
-        } catch (Exception e) {
-            System.debug('Error: ' + e);
-            throw new AuraHandledException(KPI_ERROR);
-        }
-    }
-    /******************************************************************
-	 * @Name         : getAllOrders
-	 * @Description  : Gets orders
-	 * @Created By   : Cagri Kilic
-	 * @Created Date : Jan 30, 2023
-     * @Param accId  : Id - Account Id
-     * @Return       : Object - Number of total orders
-     
-	 ******************************************************************/
-    @AuraEnabled(cacheable=true)
-    public static Object getAllOrders(Id accId) {
-        try {
-            Integer numberOfOrders = [
-                SELECT COUNT()
-                FROM Order
-                WHERE AccountId = :accId
-            ];
-            if (numberOfOrders == 0) {
-                return (Object) '0';
-            }
-            return (Object) numberOfOrders;
-        } catch (Exception e) {
-            System.debug('Error: ' + e);
-            throw new AuraHandledException(KPI_ERROR);
-        }
-    }
-    /******************************************************************
-	 * @Name         : getAvarageOfOrderAmount
-	 * @Description  : Gets avarage of order amount
-	 * @Created By   : Cagri Kilic
-	 * @Created Date : Jan 30, 2023
-     * @Param accId  : Id - Account Id
-     * @Return       : Object - Avarage of order amount
-     
-	 ******************************************************************/
-    @AuraEnabled(cacheable=true)
-    public static Object getAvarageOfOrderAmount(Id accId) {
-        try {
-            AggregateResult[] averageOfOrderAmount = [
-                SELECT AVG(TotalAmount)
-                FROM Order
-                WHERE AccountId = :accId
-            ];
-            if (averageOfOrderAmount[0].get('expr0') != null) {
-                return averageOfOrderAmount[0].get('expr0');
-            } else {
-                return (Object) '0';
-            }
         } catch (Exception e) {
             System.debug('Error: ' + e);
             throw new AuraHandledException(KPI_ERROR);
